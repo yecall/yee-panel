@@ -15,22 +15,30 @@
 // You should have received a copy of the GNU General Public License
 // along with YeeChain.  If not, see <https://www.gnu.org/licenses/>.
 
+use futures::future;
+use futures::future::Future;
 use jsonrpc_core::BoxFuture;
-
 use jsonrpc_derive::rpc;
 
 use crate::config::Config;
 use crate::rpc::client::RpcClient;
+use crate::rpc::errors;
+use crate::rpc::types::{BlockNumber, Header, Hash};
+use crate::rpc::serde::{SerdeHex, Hex};
+use std::sync::Arc;
 
 #[rpc]
 pub trait ChainApi {
-    #[rpc(name = "chain_getHeaderByHash")]
-    fn get_header_by_hash(&self, shard_num: u16) -> BoxFuture<Option<u32>>;
+    #[rpc(name = "chain_getBestNumber")]
+    fn get_best_number(&self, shard_num: u16) -> BoxFuture<Option<BlockNumber>>;
+
+    #[rpc(name = "chain_getFinalizedNumber")]
+    fn get_finalized_number(&self, shard_num: u16) -> BoxFuture<Option<BlockNumber>>;
 }
 
 pub struct Chain {
     config: Config,
-    rpc_client: RpcClient,
+    rpc_client: Arc<RpcClient>,
 }
 
 impl Chain {
@@ -38,13 +46,79 @@ impl Chain {
     pub fn new(config: Config) -> Self {
         Self {
             config: config.clone(),
-            rpc_client: RpcClient::new(config),
+            rpc_client: Arc::new(RpcClient::new(config)),
         }
+    }
+
+    fn get_finalized_hash_future(rpc_client: Arc<RpcClient>, shard_num: u16) -> Box<dyn Future<Item=Option<Hex<Vec<u8>>>, Error=jsonrpc_core::Error> + Send> {
+        let result : BoxFuture<Option<Hex<Vec<u8>>>> =  rpc_client.call_method_async("chain_getFinalizedHead", "", (), shard_num)
+            .unwrap_or_else(|e|Box::new(future::err(e.into())));
+        Box::new(result)
+    }
+
+    fn get_header_future(rpc_client: Arc<RpcClient>, hash: Option<Hex<Vec<u8>>>, shard_num: u16) -> Box<dyn Future<Item=Option<Header>, Error=jsonrpc_core::Error> + Send> {
+
+        let result: BoxFuture<Option<Header>>  = match hash{
+            Some(hash) => {
+                let params = (hash.to_string(), );
+                rpc_client.call_method_async("chain_getHeader", "", params, shard_num)
+                    .unwrap_or_else(|e|Box::new(future::err(e.into())))
+            },
+            None => {
+                let params = ();
+                rpc_client.call_method_async("chain_getHeader", "", params, shard_num)
+                    .unwrap_or_else(|e|Box::new(future::err(e.into())))
+            },
+        };
+        Box::new(result)
     }
 }
 
 impl ChainApi for Chain {
-    fn get_header_by_hash(&self, shard_num: u16) -> BoxFuture<Option<u32>> {
-        Box::new(futures::future::ok(Some(10)))
+    fn get_best_number(&self, shard_num: u16) -> BoxFuture<Option<BlockNumber>> {
+
+        match check_shard_num(shard_num, &self.config){
+            Err(e) => return Box::new(future::err(e.into())),
+            _ => (),
+        }
+
+        let result = Self::get_header_future( self.rpc_client.clone(), None, shard_num);
+
+        let result = result.map(|x|{
+            x.map(|x|x.number)
+        });
+
+        Box::new(result)
     }
+
+    fn get_finalized_number(&self, shard_num: u16) -> BoxFuture<Option<BlockNumber>> {
+
+        match check_shard_num(shard_num, &self.config){
+            Err(e) => return Box::new(future::err(e.into())),
+            _ => (),
+        }
+
+        let result  = Self::get_finalized_hash_future(self.rpc_client.clone(), shard_num);
+
+        let rpc_client = self.rpc_client.clone();
+        let result = result.and_then(move |hash| {
+            let header = Self::get_header_future(rpc_client, hash, shard_num);
+            header
+        });
+
+        let result = result.map(|x| {
+            x.map(|x|x.number)
+        });
+
+        Box::new(result)
+    }
+}
+
+
+
+fn check_shard_num(shard_num: u16, config: &Config) -> errors::Result<()> {
+    if shard_num > config.shards.len() as u16 {
+        return Err(errors::ErrorKind::InvalidShard.into())
+    }
+    Ok(())
 }

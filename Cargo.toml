@@ -28,3 +28,4 @@ exit-future = "0.1"
 http = { package = "jsonrpc-http-server", version = "10.0.1" }
 ws = { package = "jsonrpc-ws-server", version = "10.0.1" }
 env_logger = "0.7.1"
+primitive-types = "0.2"

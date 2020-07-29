@@ -18,6 +18,7 @@
 use num_bigint::BigUint;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::{error, io};
+use std::fmt;
 
 pub trait SerdeHex: Sized {
     const DEFAULT_UINT_SIZE: usize = 0;
@@ -60,10 +61,6 @@ pub trait SerdeHex: Sized {
         Self::from_bytes(bytes.as_slice()).map_err(D::Error::custom)
     }
 }
-
-///Utils to wrap independent variable
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Hex<T: SerdeHex>(#[serde(with = "SerdeHex")] pub T);
 
 impl SerdeHex for u64 {
     const DEFAULT_UINT_SIZE: usize = 8;
@@ -187,6 +184,20 @@ impl SerdeHex for BigUint {
 
     fn from_bytes(src: &[u8]) -> Result<Self, Self::Error> {
         Ok(BigUint::from_bytes_be(src))
+    }
+}
+
+
+///Utils to wrap independent variable
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Hex<T: SerdeHex>(#[serde(with = "SerdeHex")] pub T);
+
+impl<T: SerdeHex> fmt::Display for Hex<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = serde_json::to_string(self).map_err(|_|fmt::Error)?;
+        let s = s.trim_start_matches("\"");
+        let s = s.trim_end_matches("\"");
+        write!(f, "{}", s)
     }
 }
 

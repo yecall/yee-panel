@@ -31,6 +31,7 @@ pub mod errors;
 mod metadata;
 mod serde;
 mod server;
+mod types;
 
 pub fn run(opt: &Opt, config: &Config) -> errors::Result<()> {
     let rpc_interface: &str = if opt.rpc_external {
