@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::rpc::serde::SerdeHex;
 
+#[allow(dead_code)]
 pub type Hash = primitive_types::H256;
 
 pub type BlockNumber = u64;
@@ -26,10 +27,48 @@ pub type BlockNumber = u64;
 pub type Nonce = u64;
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct Header {
     #[serde(with = "SerdeHex")]
-    pub extrinsicsRoot: Vec<u8>,
+    pub extrinsics_root: Vec<u8>,
+
+    #[serde(with = "SerdeHex")]
+    pub parent_hash: Vec<u8>,
+
+    #[serde(with = "SerdeHex")]
+    pub state_root: Vec<u8>,
 
     #[serde(with = "SerdeHex")]
     pub number: BlockNumber,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ResultHeader {
+
+    #[serde(with = "SerdeHex")]
+    pub block_hash: Vec<u8>,
+
+    #[serde(with = "SerdeHex")]
+    pub extrinsics_root: Vec<u8>,
+
+    #[serde(with = "SerdeHex")]
+    pub parent_hash: Vec<u8>,
+
+    #[serde(with = "SerdeHex")]
+    pub state_root: Vec<u8>,
+
+    pub number: BlockNumber,
+}
+
+impl ResultHeader {
+    pub fn new(header: Header, block_hash: Vec<u8>) -> Self {
+        Self{
+            block_hash,
+            extrinsics_root: header.extrinsics_root,
+            parent_hash: header.parent_hash,
+            state_root: header.state_root,
+            number: header.number
+        }
+    }
 }

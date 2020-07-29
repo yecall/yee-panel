@@ -55,6 +55,7 @@ impl RpcClient {
         Ok(rpc[i].clone())
     }
 
+    #[allow(dead_code)]
     pub fn call_method<T: Serialize, R: DeserializeOwned + 'static>(
         &self,
         method: &str,
