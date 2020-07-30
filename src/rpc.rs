@@ -18,7 +18,7 @@
 use std::net::SocketAddr;
 
 use futures::future::Future;
-use log::{info};
+use log::info;
 
 use crate::config::Config;
 use crate::opt::{Opt, DEFAULT_RPC_PORT, DEFAULT_WS_PORT};
@@ -34,58 +34,58 @@ mod server;
 mod types;
 
 pub fn run(opt: &Opt, config: &Config) -> errors::Result<()> {
-    let rpc_interface: &str = if opt.rpc_external {
-        "0.0.0.0"
-    } else {
-        "127.0.0.1"
-    };
-    let ws_interface: &str = if opt.ws_external {
-        "0.0.0.0"
-    } else {
-        "127.0.0.1"
-    };
+	let rpc_interface: &str = if opt.rpc_external {
+		"0.0.0.0"
+	} else {
+		"127.0.0.1"
+	};
+	let ws_interface: &str = if opt.ws_external {
+		"0.0.0.0"
+	} else {
+		"127.0.0.1"
+	};
 
-    let rpc_address_http = parse_address(
-        &format!("{}:{}", rpc_interface, DEFAULT_RPC_PORT),
-        opt.rpc_port,
-    )?;
-    let rpc_address_ws = parse_address(
-        &format!("{}:{}", ws_interface, DEFAULT_WS_PORT),
-        opt.ws_port,
-    )?;
+	let rpc_address_http = parse_address(
+		&format!("{}:{}", rpc_interface, DEFAULT_RPC_PORT),
+		opt.rpc_port,
+	)?;
+	let rpc_address_ws = parse_address(
+		&format!("{}:{}", ws_interface, DEFAULT_WS_PORT),
+		opt.ws_port,
+	)?;
 
-    let (signal, exit) = exit_future::signal();
+	let (signal, exit) = exit_future::signal();
 
-    let handler = || {
-        let chain = Chain::new(config.clone());
+	let handler = || {
+		let chain = Chain::new(config.clone());
 
-        let mut io = pubsub::PubSubHandler::default();
-        io.extend_with(chain.to_delegate());
-        io
-    };
+		let mut io = pubsub::PubSubHandler::default();
+		io.extend_with(chain.to_delegate());
+		io
+	};
 
-    let _server = start_http(&rpc_address_http, handler())?;
+	let _server = start_http(&rpc_address_http, handler())?;
 
-    info!("Switch rpc http listen on: {}", rpc_address_http);
+	info!("Switch rpc http listen on: {}", rpc_address_http);
 
-    let _server = start_ws(&rpc_address_ws, handler())?;
+	let _server = start_ws(&rpc_address_ws, handler())?;
 
-    info!("Switch rpc ws listen on: {}", rpc_address_ws);
+	info!("Switch rpc ws listen on: {}", rpc_address_ws);
 
-    exit.wait().unwrap();
+	exit.wait().unwrap();
 
-    signal.fire();
+	signal.fire();
 
-    Ok(())
+	Ok(())
 }
 
 fn parse_address(address: &str, port: Option<u16>) -> errors::Result<SocketAddr> {
-    let mut address: SocketAddr = address
-        .parse()
-        .map_err(|_| format!("Invalid address: {}", address))?;
-    if let Some(port) = port {
-        address.set_port(port);
-    }
+	let mut address: SocketAddr = address
+		.parse()
+		.map_err(|_| format!("Invalid address: {}", address))?;
+	if let Some(port) = port {
+		address.set_port(port);
+	}
 
-    Ok(address)
+	Ok(address)
 }

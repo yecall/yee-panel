@@ -24,32 +24,32 @@ pub const DEFAULT_WS_PORT: u16 = 10066;
 
 #[derive(Debug, StructOpt, Clone)]
 pub struct Opt {
-    /// Specify HTTP RPC server TCP port
-    #[structopt(long = "rpc-port", value_name = "PORT")]
-    pub rpc_port: Option<u16>,
+	/// Specify HTTP RPC server TCP port
+	#[structopt(long = "rpc-port", value_name = "PORT")]
+	pub rpc_port: Option<u16>,
 
-    /// Specify WebSockets RPC server TCP port
-    #[structopt(long = "ws-port", value_name = "PORT")]
-    pub ws_port: Option<u16>,
+	/// Specify WebSockets RPC server TCP port
+	#[structopt(long = "ws-port", value_name = "PORT")]
+	pub ws_port: Option<u16>,
 
-    /// Listen to all RPC interfaces (default is local)
-    #[structopt(long = "rpc-external")]
-    pub rpc_external: bool,
+	/// Listen to all RPC interfaces (default is local)
+	#[structopt(long = "rpc-external")]
+	pub rpc_external: bool,
 
-    /// Listen to all Websocket interfaces (default is local)
-    #[structopt(long = "ws-external")]
-    pub ws_external: bool,
+	/// Listen to all Websocket interfaces (default is local)
+	#[structopt(long = "ws-external")]
+	pub ws_external: bool,
 
-    /// Specify custom base path.
-    #[structopt(
-        long = "base-path",
-        short = "b",
-        value_name = "PATH",
-        parse(from_os_str)
-    )]
-    pub base_path: Option<PathBuf>,
+	/// Specify custom base path.
+	#[structopt(
+		long = "base-path",
+		short = "b",
+		value_name = "PATH",
+		parse(from_os_str)
+	)]
+	pub base_path: Option<PathBuf>,
 
-    /// Sets a custom logging filter
-    #[structopt(short = "l", long = "log", value_name = "LOG_PATTERN")]
-    pub log: Option<String>,
+	/// Sets a custom logging filter
+	#[structopt(short = "l", long = "log", value_name = "LOG_PATTERN")]
+	pub log: Option<String>,
 }

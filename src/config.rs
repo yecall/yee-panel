@@ -43,53 +43,53 @@ use crate::opt::Opt;
 /// ```
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Shard {
-    pub rpc: Vec<String>,
+	pub rpc: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
-    pub shards: HashMap<String, Shard>,
+	pub shards: HashMap<String, Shard>,
 }
 
 pub struct VersionInfo {
-    pub version: &'static str,
-    pub executable_name: &'static str,
-    pub author: &'static str,
+	pub version: &'static str,
+	pub executable_name: &'static str,
+	pub author: &'static str,
 }
 
 pub fn get_config(opt: &Opt, version: &VersionInfo) -> errors::Result<Config> {
-    let conf_path = conf_path(&base_path(opt, version));
+	let conf_path = conf_path(&base_path(opt, version));
 
-    let conf_path = conf_path.join("config.toml");
+	let conf_path = conf_path.join("config.toml");
 
-    trace!("conf_path:{}", conf_path.to_string_lossy());
+	trace!("conf_path:{}", conf_path.to_string_lossy());
 
-    let mut file =
-        File::open(&conf_path).map_err(|_e| format!("Non-existed conf file: {:?}", conf_path))?;
+	let mut file =
+		File::open(&conf_path).map_err(|_e| format!("Non-existed conf file: {:?}", conf_path))?;
 
-    let mut str_val = String::new();
-    file.read_to_string(&mut str_val)?;
+	let mut str_val = String::new();
+	file.read_to_string(&mut str_val)?;
 
-    let conf: Config = toml::from_str(&str_val).map_err(|_e| "Error reading conf file")?;
+	let conf: Config = toml::from_str(&str_val).map_err(|_e| "Error reading conf file")?;
 
-    Ok(conf)
+	Ok(conf)
 }
 
 fn conf_path(base_path: &Path) -> PathBuf {
-    let mut path = base_path.to_owned();
-    path.push("conf");
-    path
+	let mut path = base_path.to_owned();
+	path.push("conf");
+	path
 }
 
 fn base_path(cli: &Opt, version: &VersionInfo) -> PathBuf {
-    cli.base_path.clone().unwrap_or_else(|| {
-        app_dirs::get_app_root(
-            AppDataType::UserData,
-            &AppInfo {
-                name: version.executable_name,
-                author: version.author,
-            },
-        )
-        .expect("app directories exist on all supported platforms; qed")
-    })
+	cli.base_path.clone().unwrap_or_else(|| {
+		app_dirs::get_app_root(
+			AppDataType::UserData,
+			&AppInfo {
+				name: version.executable_name,
+				author: version.author,
+			},
+		)
+		.expect("app directories exist on all supported platforms; qed")
+	})
 }

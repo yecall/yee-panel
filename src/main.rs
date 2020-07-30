@@ -24,45 +24,45 @@ mod opt;
 mod rpc;
 
 fn main() {
-    let result = run();
-    match result {
-        Ok(_) => (),
-        Err(e) => eprintln!("{:?}", e),
-    }
+	let result = run();
+	match result {
+		Ok(_) => (),
+		Err(e) => eprintln!("{:?}", e),
+	}
 }
 
 fn run() -> errors::Result<()> {
-    let opt = opt::Opt::from_args();
+	let opt = opt::Opt::from_args();
 
-    init_logger(&opt.log)?;
+	init_logger(&opt.log)?;
 
-    let version_info = VersionInfo {
-        version: env!("CARGO_PKG_VERSION"),
-        executable_name: env!("CARGO_PKG_NAME"),
-        author: env!("CARGO_PKG_AUTHORS"),
-    };
+	let version_info = VersionInfo {
+		version: env!("CARGO_PKG_VERSION"),
+		executable_name: env!("CARGO_PKG_NAME"),
+		author: env!("CARGO_PKG_AUTHORS"),
+	};
 
-    let config = get_config(&opt, &version_info)?;
+	let config = get_config(&opt, &version_info)?;
 
-    rpc::run(&opt, &config)?;
+	rpc::run(&opt, &config)?;
 
-    Ok(())
+	Ok(())
 }
 
 fn init_logger(log: &Option<String>) -> errors::Result<()> {
-    let mut builder = env_logger::Builder::new();
+	let mut builder = env_logger::Builder::new();
 
-    builder.filter(None, log::LevelFilter::Info);
+	builder.filter(None, log::LevelFilter::Info);
 
-    if let Ok(rust_log) = std::env::var("RUST_LOG") {
-        builder.parse_filters(&rust_log);
-    }
+	if let Ok(rust_log) = std::env::var("RUST_LOG") {
+		builder.parse_filters(&rust_log);
+	}
 
-    if let Some(log) = log {
-        builder.parse_filters(&log);
-    }
+	if let Some(log) = log {
+		builder.parse_filters(&log);
+	}
 
-    builder.try_init().map_err(|_e| "Init logger error")?;
+	builder.try_init().map_err(|_e| "Init logger error")?;
 
-    Ok(())
+	Ok(())
 }
