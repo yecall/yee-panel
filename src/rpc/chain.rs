@@ -26,7 +26,7 @@ use crate::config::Config;
 use crate::rpc::client::RpcClient;
 use crate::rpc::errors;
 use crate::rpc::serde::Hex;
-use crate::rpc::types::{BlockNumber, Header, ResultHeader};
+use crate::rpc::types::{BlockNumber, Header, ResultHeader, ResultBlock, Block};
 
 #[rpc]
 pub trait ChainApi {
@@ -38,6 +38,9 @@ pub trait ChainApi {
 
     #[rpc(name = "chain_getHeaderByNumber")]
     fn get_header_by_number(&self, shard_num: u16, number: BlockNumber) -> BoxFuture<Option<ResultHeader>>;
+
+    #[rpc(name = "chain_getBlockByNumber")]
+    fn get_block_by_number(&self, shard_num: u16, number: BlockNumber) -> BoxFuture<Option<ResultBlock>>;
 }
 
 pub struct Chain {
@@ -77,6 +80,23 @@ impl Chain {
             None => {
                 let params = ();
                 rpc_client.call_method_async("chain_getHeader", "", params, shard_num)
+                    .unwrap_or_else(|e|Box::new(future::err(e.into())))
+            },
+        };
+        Box::new(result)
+    }
+
+    fn get_block_future(rpc_client: Arc<RpcClient>, hash: &Option<Hex<Vec<u8>>>, shard_num: u16) -> Box<dyn Future<Item=Option<Block>, Error=jsonrpc_core::Error> + Send> {
+
+        let result: BoxFuture<Option<Header>>  = match hash{
+            Some(hash) => {
+                let params = (hash.to_string(), );
+                rpc_client.call_method_async("chain_getBlock", "", params, shard_num)
+                    .unwrap_or_else(|e|Box::new(future::err(e.into())))
+            },
+            None => {
+                let params = ();
+                rpc_client.call_method_async("chain_getBlock", "", params, shard_num)
                     .unwrap_or_else(|e|Box::new(future::err(e.into())))
             },
         };
@@ -138,6 +158,29 @@ impl ChainApi for Chain {
             header.map(|header| {
                 match (header, hash) {
                     (Some(header), Some(hash)) => Some(ResultHeader::new(header, hash.0)),
+                    _ => None,
+                }
+            })
+        });
+
+        Box::new(result)
+    }
+
+    fn get_block_by_number(&self, shard_num: u16, number: BlockNumber) -> BoxFuture<Option<ResultBlock>> {
+
+        match check_shard_num(shard_num, &self.config){
+            Err(e) => return Box::new(future::err(e.into())),
+            _ => (),
+        }
+
+        let result = Self::get_block_hash_future(self.rpc_client.clone(), number, shard_num);
+
+        let rpc_client = self.rpc_client.clone();
+        let result = result.and_then(move |hash| {
+            let header = Self::get_block_future(rpc_client, &hash, shard_num);
+            header.map(|block| {
+                match (block, hash) {
+                    (Some(block), Some(hash)) => Some(ResultBlock::new(block, hash.0)),
                     _ => None,
                 }
             })

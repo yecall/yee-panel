@@ -44,6 +44,12 @@ pub struct Header {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct Block {
+    pub header: Header,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct ResultHeader {
 
     #[serde(with = "SerdeHex")]
@@ -69,6 +75,21 @@ impl ResultHeader {
             parent_hash: header.parent_hash,
             state_root: header.state_root,
             number: header.number
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct ResultBlock {
+    pub header: ResultHeader,
+}
+
+impl ResultBlock {
+    pub fn new(block: Block, block_hash: Vec<u8>) -> Self {
+        let header = ResultHeader::new(block.header, block_hash);
+        Self{
+            header
         }
     }
 }
