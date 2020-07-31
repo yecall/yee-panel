@@ -54,6 +54,10 @@ error_chain! {
 			description("invalid shard code"),
 			display("Invalid shard code"),
 		}
+		InvalidExtrinsic {
+			description("invalid extrinsic"),
+			display("Invalid extrinsic"),
+		}
 		RpcError(e: jsonrpc_client_transports::RpcError) {
 			description("rpc error"),
 			display("Rpc error"),

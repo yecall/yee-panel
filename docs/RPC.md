@@ -10,6 +10,7 @@
 - [chain_getExtrinsicByHash](#chain_getExtrinsicByHash)
 - [chain_getExtrinsicByRaw](#chain_getExtrinsicByRaw)
 - [state_getNonce](#state_getNonce)
+- [author_submitExtrinsic](#author_submitExtrinsic)
 
 ## chain_getBestNumber
 
@@ -654,6 +655,37 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"state_getNonce","params":["yee1z
 {
   "jsonrpc": "2.0",
   "result": 1,
+  "id": 1
+}
+
+```
+
+## author_submitExtrinsic
+
+Submit extrinsic
+
+### Parameters
+ - `raw`
+ 
+```asm
+params: [
+    "0x310281ff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc5440b2595b4c269c29377b658abe62303d59f975d0914f205d5fe8c7f24974a56007b979bf73e76211c3c3826293def93b882ef03a0a48e479693c2cbcb0425c0704b5030400ff94d988b42d96dcbd6605ff47f19c6ab35f626eb1bc8bbd28f59a74997a253a3d0284d717",
+]
+```
+
+### Returns 
+`hash`
+
+
+### Example
+```
+// Request
+curl -X POST --data '{"jsonrpc":"2.0","method":"author_submitExtrinsic","params":["0x310281ff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc5440b2595b4c269c29377b658abe62303d59f975d0914f205d5fe8c7f24974a56007b979bf73e76211c3c3826293def93b882ef03a0a48e479693c2cbcb0425c0704b5030400ff94d988b42d96dcbd6605ff47f19c6ab35f626eb1bc8bbd28f59a74997a253a3d0284d717"],"id":1}' localhost:10055 -H 'Content-Type: application/json'
+
+// Result
+{
+  "jsonrpc": "2.0",
+  "result": "0x4298dee6d0f9a84b28b14a42eada3d8f1e912efce359798f85c17f09f1cdcd79",
   "id": 1
 }
 
