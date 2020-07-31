@@ -73,6 +73,9 @@ pub trait ChainApi {
 
     #[rpc(name = "state_getNonce")]
     fn get_nonce(&self, address: String, block_number: Option<BlockNumber>) -> BoxFuture<Nonce>;
+
+    #[rpc(name = "author_submitExtrinsic")]
+    fn submit_extrinsic(&self, raw: Hex<Vec<u8>>) -> BoxFuture<Hex<Vec<u8>>>;
 }
 
 pub struct Chain {
@@ -379,6 +382,10 @@ impl ChainApi for Chain {
         });
 
         Box::new(result)
+    }
+
+    fn submit_extrinsic(&self, raw: Hex<Vec<u8>>) -> BoxFuture<Hex<Vec<u8>>> {
+
     }
 }
 
