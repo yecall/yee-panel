@@ -119,6 +119,7 @@ impl TryFrom<Block> for ResultBlock {
 				let hash = blake2_256(&raw);
 				x.hash = Some(Hex(hash.to_vec()));
 				x.index = Some(index as u32);
+				x.raw = Some(Hex(raw));
 
 				Ok(x)
 			})
@@ -143,6 +144,16 @@ impl TryFrom<ResultBlock> for Value {
 	}
 }
 
+impl TryFrom<ResultTransaction> for Value {
+	type Error = errors::Error;
+
+	fn try_from(x: ResultTransaction) -> Result<Self, Self::Error> {
+		let x = serde_json::to_vec(&x).map_err(|_| errors::ErrorKind::ParseError)?;
+		let x = serde_json::from_slice(&x).map_err(|_| errors::ErrorKind::ParseError)?;
+		Ok(x)
+	}
+}
+
 #[derive(Serialize, Debug)]
 pub struct ResultSignature {
 	#[serde(with = "SerdeHex")]
@@ -155,6 +166,8 @@ pub struct ResultSignature {
 
 #[derive(Serialize, Debug)]
 pub struct ResultTransaction {
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub raw: Option<Hex<Vec<u8>>>,
 	pub hash: Option<Hex<Vec<u8>>>,
 	pub signature: Option<ResultSignature>,
 	pub call: Call,
@@ -188,6 +201,7 @@ impl From<Transaction> for ResultTransaction {
 				era: era.into(),
 			});
 		Self {
+			raw: None,
 			hash: None,
 			signature,
 			call: t.call,

@@ -32,7 +32,7 @@ use crate::config::Config;
 use crate::rpc::client::{self, RpcClient};
 use crate::rpc::errors;
 use crate::rpc::serde::Hex;
-use crate::rpc::types::{get_value_storage_key, BlockNumber, ResultBlock, ResultHeader};
+use crate::rpc::types::{get_value_storage_key, BlockNumber, ResultBlock, ResultHeader, ResultTransaction};
 
 #[rpc]
 pub trait ChainApi {
@@ -61,6 +61,9 @@ pub trait ChainApi {
 
     #[rpc(name = "chain_getBlockByHash")]
     fn get_block_by_hash(&self, shard_num: u16, hash: Hex<Vec<u8>>) -> BoxFuture<Option<Value>>;
+
+    #[rpc(name = "chain_getExtrinsicByHash")]
+    fn get_extrinsic_by_hash(&self, shard_num: u16, block_number: BlockNumber, hash: Hex<Vec<u8>>) -> BoxFuture<Option<Value>>;
 }
 
 pub struct Chain {
@@ -181,12 +184,15 @@ impl ChainApi for Chain {
         };
         let result = get_block_hash();
 
-        let result = get_block_future(self.rpc_client.clone(), shard_num, result);
+        let result = get_block_future(self.rpc_client.clone(), shard_num,  false,result);
+
+        let result = get_value_future(result);
 
         let result = result.and_then(|x| match x {
             Ok(v) => future::ok(v),
             Err(e) => future::err(e),
         });
+
 
         Box::new(result)
     }
@@ -199,7 +205,49 @@ impl ChainApi for Chain {
 
         let result = Box::new(future::ok(Ok(Some(hash))));
 
-        let result = get_block_future(self.rpc_client.clone(), shard_num, result);
+        let result = get_block_future(self.rpc_client.clone(), shard_num, false,result);
+
+        let result = get_value_future(result);
+
+        let result = result.and_then(|x| match x {
+            Ok(v) => future::ok(v),
+            Err(e) => future::err(e),
+        });
+
+        Box::new(result)
+    }
+
+    fn get_extrinsic_by_hash(&self, shard_num: u16, block_number: BlockNumber, hash: Hex<Vec<u8>>) -> BoxFuture<Option<Value>> {
+
+        // get block hash
+        let get_block_hash = || -> Box<dyn Future<Item=jsonrpc_core::Result<Option<Hex<Vec<u8>>>>, Error=jsonrpc_core::Error> + Send> {
+            let result = client::get_block_hash_future(self.rpc_client.clone(), block_number, shard_num);
+            let result = result.map(|x| Ok(x));
+            Box::new(result)
+        };
+        let result = get_block_hash();
+
+        let result = get_block_future(self.rpc_client.clone(), shard_num,  false,result);
+
+        // filter
+        let filter = move || -> BoxFuture<jsonrpc_core::Result<Option<ResultTransaction>>> {
+            let result = result.map(move|x| {
+                match x {
+                    Ok(Some(block)) => {
+                        let extrinsic = block.extrinsics.into_iter().filter_map(|tx| {
+                            if tx.hash.as_ref() == Some(&hash) { Some(tx) } else{None}
+                        }).next();
+                        Ok(extrinsic)
+                    }
+                    Ok(None) => Ok(None),
+                    Err(e) => Err(e),
+                }
+            });
+            Box::new(result)
+        };
+        let result = filter();
+
+        let result = get_value_future(result);
 
         let result = result.and_then(|x| match x {
             Ok(v) => future::ok(v),
@@ -268,7 +316,7 @@ fn get_block_extrinsics_result(
     Ok(result)
 }
 
-fn get_block_future(rpc_client: Arc<RpcClient>, shard_num: u16, hash_future: BoxFuture<jsonrpc_core::Result<Option<Hex<Vec<u8>>>>>) -> BoxFuture<jsonrpc_core::Result<Option<Value>>> {
+fn get_block_future(rpc_client: Arc<RpcClient>, shard_num: u16, with_raw: bool, hash_future: BoxFuture<jsonrpc_core::Result<Option<Hex<Vec<u8>>>>>) -> BoxFuture<jsonrpc_core::Result<Option<ResultBlock>>> {
 
     // get block
     let tmp_rpc_client = rpc_client.clone();
@@ -306,9 +354,12 @@ fn get_block_future(rpc_client: Arc<RpcClient>, shard_num: u16, hash_future: Box
                     let events_storage_key = &Hex(events_storage_key.0);
                     let block_hash = &Some(block.header.block_hash.as_ref().expect("qed").clone());
                     let events = client::get_storage_future(tmp_rpc_client, events_storage_key, block_hash, shard_num);
-                    let result = events.map(|x| -> jsonrpc_core::Result<Option<ResultBlock>> {
+                    let result = events.map(move |x| -> jsonrpc_core::Result<Option<ResultBlock>> {
                         let result = get_block_extrinsics_result(x)?;
                         for (index, tx) in &mut block.extrinsics.iter_mut().enumerate() {
+                            if !with_raw {
+                                tx.raw = None;
+                            }
                             tx.success = result.get(&(index as u32)).as_ref().map(|x| x.0);
                         }
                         Ok(Some(block))
@@ -323,12 +374,20 @@ fn get_block_future(rpc_client: Arc<RpcClient>, shard_num: u16, hash_future: Box
     };
     let result = get_block_with_extrinsic_result();
 
+    Box::new(result)
+}
+
+fn get_value_future<T>(future: BoxFuture<jsonrpc_core::Result<Option<T>>>) -> BoxFuture<jsonrpc_core::Result<Option<Value>>>
+where
+    T: TryInto<Value> + 'static,
+{
+
     // convert to value to avoid jsonrpc u128 serialize problem
     let convert_to_value = || -> BoxFuture<jsonrpc_core::Result<Option<Value>>> {
-        let result = result.map(|x| {
+        let result = future.map(|x| {
             match x {
                 Ok(Some(block)) => {
-                    let result: Value = block.try_into()?;
+                    let result: Value = block.try_into().map_err(|_|errors::Error::from(errors::ErrorKind::ParseError))?;
                     Ok(Some(result))
                 }
                 Ok(None) => Ok(None),

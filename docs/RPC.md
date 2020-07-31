@@ -7,6 +7,7 @@
 - [chain_getHeaderByHash](#chain_getHeaderByHash)
 - [chain_getBlockByNumber](#chain_getBlockByNumber)
 - [chain_getBlockByHash](#chain_getBlockByHash)
+- [chain_getExtrinsicByHash](#chain_getExtrinsicByHash)
 
 ## chain_getBestNumber
 
@@ -485,6 +486,79 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByHash","params":[
       "parent_hash": "0x6f08c4822a8c277156a257d1c8118ac38ce5ad4c353efc27f0efe224507dbd46",
       "state_root": "0xc3e8c83d90e57f5574829faf79f1bba566350f2251189088a51ec6880d7e7fc6"
     }
+  },
+  "id": 1
+}
+
+```
+
+## chain_getExtrinsicByHash
+
+Get the extrinsic by block number and extrinsic hash
+
+### Parameters
+ - `shard_num`
+ - `block_number`
+ - `extrinsic_hash`
+ 
+```asm
+params: [
+    0,
+    121,
+    "0x9a3d2d9aac88964da0d3efc36ae9de85f728f0cba6043bd84d6573b3735e5c7f",
+]
+```
+
+### Returns 
+`extrinsic`
+ - `call`
+ - `hash`
+ - `index`
+ - `signature`
+ - `success`
+ 
+`call`
+ - `module`
+ - `method`
+ - `params`
+ 
+`signature`
+ - `era`
+ - `nonce`
+ - `sender`
+ - `signature`
+
+### Example
+```
+// Request
+curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getExtrinsicByHash","params":[0, 121, "0x9a3d2d9aac88964da0d3efc36ae9de85f728f0cba6043bd84d6573b3735e5c7f"],"id":1}' localhost:10055 -H 'Content-Type: application/json'
+
+// Result
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "call": {
+      "method": 0,
+      "module": 4,
+      "params": {
+        "dest": "0xff94d988b42d96dcbd6605ff47f19c6ab35f626eb1bc8bbd28f59a74997a253a3d",
+        "value": 100000000
+      }
+    },
+    "hash": "0x9a3d2d9aac88964da0d3efc36ae9de85f728f0cba6043bd84d6573b3735e5c7f",
+    "index": 5,
+    "signature": {
+      "era": {
+        "Mortal": [
+          64,
+          56
+        ]
+      },
+      "nonce": 0,
+      "sender": "0xff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc54",
+      "signature": "0x3cba8ec56b55217f962cdb458f0b9b7cc303f8692e0480d7b7ff717618253034e5f632e8fe280837745970a1f0a17b7a7fd104b0d81f5bb8491bfd5c4b422e0f"
+    },
+    "success": true
   },
   "id": 1
 }

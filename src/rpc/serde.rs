@@ -188,7 +188,7 @@ impl SerdeHex for BigUint {
 }
 
 ///Utils to wrap independent variable
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Hex<T: SerdeHex>(#[serde(with = "SerdeHex")] pub T);
 
 impl<T: SerdeHex> fmt::Display for Hex<T> {
