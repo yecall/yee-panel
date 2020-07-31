@@ -64,6 +64,9 @@ pub trait ChainApi {
 
     #[rpc(name = "chain_getExtrinsicByHash")]
     fn get_extrinsic_by_hash(&self, shard_num: u16, block_number: BlockNumber, hash: Hex<Vec<u8>>) -> BoxFuture<Option<Value>>;
+
+    #[rpc(name = "chain_getExtrinsicByRaw")]
+    fn get_extrinsic_by_raw(&self, shard_num: u16, block_number: BlockNumber, raw: Hex<Vec<u8>>) -> BoxFuture<Option<Value>>;
 }
 
 pub struct Chain {
@@ -256,6 +259,51 @@ impl ChainApi for Chain {
 
         Box::new(result)
     }
+
+    fn get_extrinsic_by_raw(&self, shard_num: u16, block_number: BlockNumber, raw: Hex<Vec<u8>>) -> BoxFuture<Option<Value>> {
+
+        // get block hash
+        let get_block_hash = || -> Box<dyn Future<Item=jsonrpc_core::Result<Option<Hex<Vec<u8>>>>, Error=jsonrpc_core::Error> + Send> {
+            let result = client::get_block_hash_future(self.rpc_client.clone(), block_number, shard_num);
+            let result = result.map(|x| Ok(x));
+            Box::new(result)
+        };
+        let result = get_block_hash();
+
+        let result = get_block_future(self.rpc_client.clone(), shard_num,  true,result);
+
+        // filter
+        let filter = move || -> BoxFuture<jsonrpc_core::Result<Option<ResultTransaction>>> {
+            let result = result.map(move|x| {
+                match x {
+                    Ok(Some(block)) => {
+                        let extrinsic = block.extrinsics.into_iter().filter_map(|tx| {
+                            if tx.raw.as_ref() == Some(&raw) { Some(tx) } else{None}
+                        }).next();
+                        let extrinsic = extrinsic.map(|mut x|{
+                            x.raw = None;
+                            x
+                        });
+                        Ok(extrinsic)
+                    }
+                    Ok(None) => Ok(None),
+                    Err(e) => Err(e),
+                }
+            });
+            Box::new(result)
+        };
+        let result = filter();
+
+        let result = get_value_future(result);
+
+        let result = result.and_then(|x| match x {
+            Ok(v) => future::ok(v),
+            Err(e) => future::err(e),
+        });
+
+        Box::new(result)
+    }
+
 }
 
 fn check_shard_num(shard_num: u16, config: &Config) -> errors::Result<()> {

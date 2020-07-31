@@ -8,6 +8,7 @@
 - [chain_getBlockByNumber](#chain_getBlockByNumber)
 - [chain_getBlockByHash](#chain_getBlockByHash)
 - [chain_getExtrinsicByHash](#chain_getExtrinsicByHash)
+- [chain_getExtrinsicByRaw](#chain_getExtrinsicByRaw)
 
 ## chain_getBestNumber
 
@@ -527,6 +528,64 @@ params: [
  - `nonce`
  - `sender`
  - `signature`
+
+### Example
+```
+// Request
+curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getExtrinsicByHash","params":[0, 121, "0x9a3d2d9aac88964da0d3efc36ae9de85f728f0cba6043bd84d6573b3735e5c7f"],"id":1}' localhost:10055 -H 'Content-Type: application/json'
+
+// Result
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "call": {
+      "method": 0,
+      "module": 4,
+      "params": {
+        "dest": "0xff94d988b42d96dcbd6605ff47f19c6ab35f626eb1bc8bbd28f59a74997a253a3d",
+        "value": 100000000
+      }
+    },
+    "hash": "0x9a3d2d9aac88964da0d3efc36ae9de85f728f0cba6043bd84d6573b3735e5c7f",
+    "index": 5,
+    "signature": {
+      "era": {
+        "Mortal": [
+          64,
+          56
+        ]
+      },
+      "nonce": 0,
+      "sender": "0xff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc54",
+      "signature": "0x3cba8ec56b55217f962cdb458f0b9b7cc303f8692e0480d7b7ff717618253034e5f632e8fe280837745970a1f0a17b7a7fd104b0d81f5bb8491bfd5c4b422e0f"
+    },
+    "success": true
+  },
+  "id": 1
+}
+
+```
+
+## chain_getExtrinsicByRaw
+
+Get the extrinsic by block number and extrinsic raw
+
+### Parameters
+ - `shard_num`
+ - `block_number`
+ - `extrinsic_raw`
+ 
+```asm
+params: [
+    0,
+    121,
+    "00x310281ff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc543cba8ec56b55217f962cdb458f0b9b7cc303f8692e0480d7b7ff717618253034e5f632e8fe280837745970a1f0a17b7a7fd104b0d81f5bb8491bfd5c4b422e0f0085030400ff94d988b42d96dcbd6605ff47f19c6ab35f626eb1bc8bbd28f59a74997a253a3d0284d717",
+]
+```
+
+### Returns 
+reference `chain_getExtrinsicByHash`
+
 
 ### Example
 ```
