@@ -1,6 +1,6 @@
 # Yee panel
 
-Yee panel is a friendly RPC service
+Yee panel is a friendly RPC middleware
 
 ## Build
 
