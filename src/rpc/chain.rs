@@ -49,6 +49,13 @@ pub trait ChainApi {
         number: BlockNumber,
     ) -> BoxFuture<Option<ResultHeader>>;
 
+    #[rpc(name = "chain_getHeaderByHash")]
+    fn get_header_by_hash(
+        &self,
+        shard_num: u16,
+        hash: Hex<Vec<u8>>,
+    ) -> BoxFuture<Option<ResultHeader>>;
+
     #[rpc(name = "chain_getBlockByNumber")]
     fn get_block_by_number(&self, shard_num: u16, number: BlockNumber) -> BoxFuture<Option<Value>>;
 
@@ -115,6 +122,34 @@ impl ChainApi for Chain {
         }
 
         let result = client::get_block_hash_future(self.rpc_client.clone(), number, shard_num);
+
+        let rpc_client = self.rpc_client.clone();
+        let result = result.and_then(move |hash| {
+            let header = client::get_header_future(rpc_client, &hash, shard_num);
+            header.map(|header| match (header, hash) {
+                (Some(header), Some(hash)) => {
+                    let mut header: ResultHeader = header.into();
+                    header.block_hash = Some(hash);
+                    Some(header)
+                }
+                _ => None,
+            })
+        });
+
+        Box::new(result)
+    }
+
+    fn get_header_by_hash(
+        &self,
+        shard_num: u16,
+        hash: Hex<Vec<u8>>,
+    ) -> BoxFuture<Option<ResultHeader>> {
+        match check_shard_num(shard_num, &self.config) {
+            Err(e) => return Box::new(future::err(e.into())),
+            _ => (),
+        }
+
+        let result = future::ok(Some(hash));
 
         let rpc_client = self.rpc_client.clone();
         let result = result.and_then(move |hash| {

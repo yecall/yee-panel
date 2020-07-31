@@ -4,6 +4,7 @@
 - [chain_getBestNumber](#chain_getBestNumber)
 - [chain_getFinalizedNumber](#chain_getFinalizedNumber)
 - [chain_getHeaderByNumber](#chain_getHeaderByNumber)
+- [chain_getHeaderByHash](#chain_getHeaderByHash)
 - [chain_getBlockByNumber](#chain_getBlockByNumber)
 - [chain_getBlockByHash](#chain_getBlockByHash)
 
@@ -104,6 +105,49 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getHeaderByNumber","params
     "number": 65,
     "parent_hash": "0x68ab5ba6d5e1992cc65f66c36a21fc10ea9513a173737c4a02063d6be666029f",
     "state_root": "0xa27664b888bed276ba67e0ee1cca674976ab4549992491ceb09cd36af12979b4"
+  },
+  "id": 1
+}
+
+```
+
+## chain_getHeaderByHash
+
+Get the header by block hash
+
+### Parameters
+ - `shard_num`
+ - `hash`
+ 
+```asm
+params: [
+    0,
+    "0xeed3ef98e847cc817b8e682fe11e63fd86050d6699e484eb75ff28fe9580bd7a"
+]
+```
+
+### Returns
+`header`
+ - `block_hash`
+ - `extrinsics_root`
+ - `number`
+ - `parent_hash`
+ - `state_root`
+
+### Example
+```
+// Request
+curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getHeaderByHash","params":[0, "0xeed3ef98e847cc817b8e682fe11e63fd86050d6699e484eb75ff28fe9580bd7a"],"id":1}' localhost:10055 -H 'Content-Type: application/json'
+
+// Result
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "block_hash": "0xeed3ef98e847cc817b8e682fe11e63fd86050d6699e484eb75ff28fe9580bd7a",
+    "extrinsics_root": "0x30f1d15224e9e286737b8604f80bf92734dff43a2fb866651fecff6a7c131afd",
+    "number": 98,
+    "parent_hash": "0x3c8f6a9a88c8b04e4699c8c45a7729b1aa5ce23ac177fbb963b6e0064440e5f5",
+    "state_root": "0x40b868ceb9a1c833e0f685b0fd250f371ec4da335b05189ef52caf459e2ac9a8"
   },
   "id": 1
 }
