@@ -9,6 +9,7 @@
 - [chain_getBlockByHash](#chain_getBlockByHash)
 - [chain_getExtrinsicByHash](#chain_getExtrinsicByHash)
 - [chain_getExtrinsicByRaw](#chain_getExtrinsicByRaw)
+- [state_getNonce](#state_getNonce)
 
 ## chain_getBestNumber
 
@@ -619,6 +620,40 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getExtrinsicByHash","param
     },
     "success": true
   },
+  "id": 1
+}
+
+```
+
+
+## state_getNonce
+
+Get the nonce of the address
+
+### Parameters
+ - `address`
+ - `block_number`: Optional
+ 
+```asm
+params: [
+    "yee1zqe7q4mgy2n2sdhkz2sexqmqggzsu2rd53tp7hx9mrh9vrrym32qzlkq6f",
+    121,
+]
+```
+
+### Returns 
+`nonce`
+
+
+### Example
+```
+// Request
+curl -X POST --data '{"jsonrpc":"2.0","method":"state_getNonce","params":["yee1zqe7q4mgy2n2sdhkz2sexqmqggzsu2rd53tp7hx9mrh9vrrym32qzlkq6f", 121],"id":1}' localhost:10055 -H 'Content-Type: application/json'
+
+// Result
+{
+  "jsonrpc": "2.0",
+  "result": 1,
   "id": 1
 }
 
