@@ -28,11 +28,13 @@ use serde_json::Value;
 use srml_system::{EventRecord, Phase};
 use yee_primitives::Address;
 use yee_primitives::AddressCodec;
+use yee_primitives::Hrp;
 use yee_runtime::Event;
 use yee_sharding_primitives::utils::shard_num_for_bytes;
 use yee_signer::tx::types::Transaction;
 
 use crate::config::Config;
+use crate::config::{HRP, SHARD_COUNT};
 use crate::rpc::client::{self, RpcClient};
 use crate::rpc::errors;
 use crate::rpc::serde::Hex;
@@ -214,6 +216,8 @@ impl ChainApi for Chain {
 
 		let result = get_value_future(result);
 
+		let result = get_value_with_address_future(result);
+
 		let result = result.and_then(|x| match x {
 			Ok(v) => future::ok(v),
 			Err(e) => future::err(e),
@@ -233,6 +237,8 @@ impl ChainApi for Chain {
 		let result = get_block_future(self.rpc_client.clone(), shard_num, false, result);
 
 		let result = get_value_future(result);
+
+		let result = get_value_with_address_future(result);
 
 		let result = result.and_then(|x| match x {
 			Ok(v) => future::ok(v),
@@ -289,6 +295,8 @@ impl ChainApi for Chain {
 		let result = filter();
 
 		let result = get_value_future(result);
+
+		let result = get_value_with_address_future(result);
 
 		let result = result.and_then(|x| match x {
 			Ok(v) => future::ok(v),
@@ -350,6 +358,8 @@ impl ChainApi for Chain {
 
 		let result = get_value_future(result);
 
+		let result = get_value_with_address_future(result);
+
 		let result = result.and_then(|x| match x {
 			Ok(v) => future::ok(v),
 			Err(e) => future::err(e),
@@ -375,7 +385,7 @@ impl ChainApi for Chain {
 			None => {
 				return Box::new(future::err(
 					errors::Error::from(errors::ErrorKind::InvalidShard).into(),
-				))
+				));
 			}
 		};
 		let storage_key = get_map_storage_key(&public_key, b"System AccountNonce");
@@ -437,7 +447,7 @@ impl ChainApi for Chain {
 			None => {
 				return Box::new(future::err(
 					errors::Error::from(errors::ErrorKind::InvalidExtrinsic).into(),
-				))
+				));
 			}
 		};
 
@@ -464,7 +474,7 @@ impl ChainApi for Chain {
 			None => {
 				return Box::new(future::err(
 					errors::Error::from(errors::ErrorKind::InvalidShard).into(),
-				))
+				));
 			}
 		};
 
@@ -624,6 +634,73 @@ where
 	let result = convert_to_value();
 
 	Box::new(result)
+}
+
+fn get_value_with_address_future(
+	future: BoxFuture<jsonrpc_core::Result<Option<Value>>>,
+) -> BoxFuture<jsonrpc_core::Result<Option<Value>>> {
+	let hrp = HRP.read().expect("qed").clone();
+	let shard_count = SHARD_COUNT.read().expect("qed").clone();
+
+	let provide_address = move || -> BoxFuture<jsonrpc_core::Result<Option<Value>>> {
+		let result = future.map(move |x| match x {
+			Ok(Some(mut value)) => {
+				// process block
+				match value.get_mut("extrinsics") {
+					Some(extrinsics) => match extrinsics.as_array_mut() {
+						Some(extrinsics) => {
+							for extrinsic in extrinsics {
+								extrinsic_append_address(extrinsic, hrp.clone(), shard_count)
+							}
+						}
+						None => (),
+					},
+					None => (),
+				}
+
+				// process extrinsic
+				match value.get("call") {
+					Some(_) => extrinsic_append_address(&mut value, hrp.clone(), shard_count),
+					None => (),
+				}
+
+				Ok(Some(value))
+			}
+			Ok(None) => Ok(None),
+			Err(e) => Err(e),
+		});
+		Box::new(result)
+	};
+	let result = provide_address();
+
+	Box::new(result)
+}
+
+fn extrinsic_append_address(extrinsic: &mut Value, hrp: Hrp, shard_count: u16) {
+	let call = &mut extrinsic["call"];
+	let module = call.get("module").and_then(|x| x.as_u64());
+	let method = call.get("method").and_then(|x| x.as_u64());
+	match (module, method) {
+		(Some(4), Some(0)) => {
+			let params = &mut call["params"];
+			if let Some(dest) = params["dest"].as_str() {
+				let dest = dest.trim_start_matches("0x");
+				match hex::decode(dest) {
+					Ok(dest) => {
+						if dest[0] == 0xFF {
+							let public = dest[1..].to_vec();
+							let shard_num = shard_num_for_bytes(&public, shard_count).expect("qed");
+							let address = public.to_address(hrp).expect("qed");
+							params["dest_address"] = Value::String(address.0);
+							params["dest_shard_num"] = Value::Number(shard_num.into());
+						}
+					}
+					Err(_) => (),
+				}
+			}
+		}
+		_ => (),
+	}
 }
 
 fn u64_from_slice(bytes: &[u8]) -> errors::Result<u64> {

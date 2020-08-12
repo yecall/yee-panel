@@ -22,9 +22,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use substrate_primitives::blake2_256;
 use substrate_primitives::storage::StorageKey;
+use yee_primitives::AddressCodec;
+use yee_sharding_primitives::utils::shard_num_for_bytes;
 use yee_signer::tx::call::Call;
 use yee_signer::tx::types::{Era, Transaction};
 
+use crate::config::{HRP, SHARD_COUNT};
 use crate::rpc::errors;
 use crate::rpc::serde::{Hex, SerdeHex};
 
@@ -158,6 +161,8 @@ impl TryFrom<ResultTransaction> for Value {
 pub struct ResultSignature {
 	#[serde(with = "SerdeHex")]
 	pub sender: Vec<u8>,
+	pub sender_address: String,
+	pub sender_shard_num: u16,
 	#[serde(with = "SerdeHex")]
 	pub signature: Vec<u8>,
 	pub nonce: u64,
@@ -192,14 +197,21 @@ impl From<Era> for ResultEra {
 
 impl From<Transaction> for ResultTransaction {
 	fn from(t: Transaction) -> Self {
-		let signature = t
-			.signature
-			.map(|(address, sig, nonce, era)| ResultSignature {
-				sender: address.0.to_vec(),
+		let hrp = HRP.read().expect("qed").clone();
+		let shard_count = SHARD_COUNT.read().expect("qed").clone();
+		let signature = t.signature.map(|(sender, sig, nonce, era)| {
+			let public = sender.0[1..].to_vec();
+			let shard_num = shard_num_for_bytes(&public, shard_count).expect("qed");
+			let address = public.to_address(hrp).expect("qed");
+			ResultSignature {
+				sender: sender.0.to_vec(),
+				sender_address: address.0,
+				sender_shard_num: shard_num,
 				signature: sig.to_vec(),
 				nonce: nonce.0,
 				era: era.into(),
-			});
+			}
+		});
 		Self {
 			raw: None,
 			hash: None,

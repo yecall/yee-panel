@@ -201,12 +201,14 @@ params: [
  - `era`
  - `nonce`
  - `sender`
+ - `sender_address`
+ - `sender_shard_num`
  - `signature`
 
 ### Example
 ```
 // Request
-curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByNumber","params":[0, 121],"id":1}' localhost:10055 -H 'Content-Type: application/json'
+curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByNumber","params":[0, 394],"id":1}' localhost:10055 -H 'Content-Type: application/json'
 
 // Result
 {
@@ -218,10 +220,10 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByNumber","params"
           "method": 0,
           "module": 0,
           "params": {
-            "now": 1596125229
+            "now": 1596874295
           }
         },
-        "hash": "0xd5fdce0a3cf253abaa856c21cdf64a57d33df35b163b004e25c57d7469d66c98",
+        "hash": "0x033460364355b535bc1af8d55bede9eeb7fde511fe033e4b379156f32ff15e34",
         "index": 0,
         "signature": null,
         "success": true
@@ -232,12 +234,12 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByNumber","params"
           "module": 2,
           "params": {
             "info": {
-              "coinbase": "0x1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc54",
+              "coinbase": "0x44a5fbc7fff3cb26358e6070fbe7e171f978a5bf6de3dcc7ba359bb783916d44",
               "reward_condition": "Normal"
             }
           }
         },
-        "hash": "0x7d741e7c792e5aa8aad2f1d5793b3f275c62d0a8dfaac23296728451c7fb41b0",
+        "hash": "0x274e0944bd0fa0626b6beefd60da6692b7e7340e606865d50ee1c43c2053315b",
         "index": 1,
         "signature": null,
         "success": true
@@ -264,10 +266,10 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByNumber","params"
           "method": 0,
           "module": 6,
           "params": {
-            "info": "0x58c35a5978bc6b24e6c4b2957335cd834212af9e5f7117b8f03e81075809dde0"
+            "info": "0xc260e48a949ae9fdcfc3386d82b59fa3cb5c9532323cdb48273bf1d1d6f635d9"
           }
         },
-        "hash": "0x78c2005bd842aaf5fd91e43ffc992c5cfbed7da3ef35b3caae36e06599c93ba6",
+        "hash": "0x6fef63024a5783cc998dec92ef2b781e97a261a964bc13667e9ff811ca7e11fe",
         "index": 3,
         "signature": null,
         "success": true
@@ -277,10 +279,10 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByNumber","params"
           "method": 0,
           "module": 7,
           "params": {
-            "hint": 114
+            "hint": 387
           }
         },
-        "hash": "0x013130cce060f5ee06ec96c2cd9362e47305c31eca26aaf9c3b7b3858cdd9440",
+        "hash": "0x4ce997a6efd74701a5e39205e10307c46fe33366b1ae6a53c307ec2a67ad68ec",
         "index": 4,
         "signature": null,
         "success": true
@@ -290,49 +292,36 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByNumber","params"
           "method": 0,
           "module": 4,
           "params": {
-            "dest": "0xff94d988b42d96dcbd6605ff47f19c6ab35f626eb1bc8bbd28f59a74997a253a3d",
-            "value": 100000000
+            "dest": "0xffc49bc1483a1669d65b19274445cb86604b7eca1d8e8d062269c8c6796a45b625",
+            "dest_address": "yee1cjduzjp6ze5avkceyazytjuxvp9hajsa36xsvgnferr8j6j9kcjsnuzkdc",
+            "dest_shard_num": 1,
+            "value": 10000000000
           }
         },
-        "hash": "0x9a3d2d9aac88964da0d3efc36ae9de85f728f0cba6043bd84d6573b3735e5c7f",
+        "hash": "0xeca31494ab0fd0dfbf5927f398e4ca3b9766c4d674f9d64bd4344c67e56b2e9b",
         "index": 5,
         "signature": {
           "era": {
             "Mortal": [
               64,
-              56
+              9
             ]
           },
-          "nonce": 0,
-          "sender": "0xff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc54",
-          "signature": "0x3cba8ec56b55217f962cdb458f0b9b7cc303f8692e0480d7b7ff717618253034e5f632e8fe280837745970a1f0a17b7a7fd104b0d81f5bb8491bfd5c4b422e0f"
+          "nonce": 1,
+          "sender": "0xff36b116bcdeff6bf63539cea3cafdd90bb53d6df043b2ef791d234c92ca5de804",
+          "sender_address": "yee1x6c3d0x7la4lvdfee63u4lwepw6n6m0sgwew77gaydxf9jjaaqzqzzu8dj",
+          "sender_shard_num": 0,
+          "signature": "0x80ba2ca34dfe11d120a8c610534887312c79e5c247da9b4f31ea7495a4376f6a9512d3f0b771c923142c46dc33ef6f924f86b8f7bcd1749eb2e15aa388bddb09"
         },
-        "success": true
-      },
-      {
-        "call": {
-          "method": 0,
-          "module": 9,
-          "params": {
-            "hash": "0xf61c24cee7371133a2295686e6d3c4f0bf3499674d9e0ed1b0d26d5e211bebf5",
-            "number": 89,
-            "parent": "0xe818f6fdf28768f4070fe337245249a584f84dea0ef2a90f2918042625254362",
-            "relay_type": "Balance",
-            "tx": "0x310281ff66122af0ca54d09bd572c01d1b9df1aaa1a139d414c2e9ef3a519a307c85fb192e5fca8b8793c5e413d1f8d89eb00d99f9b881de3863378bb2a8f4f49c3fb628b1bdfa4070297edbbde830c281ed9996c9c6b706b47f82ef94c0346d9878a40c0075010400ff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc540284d717"
-          }
-        },
-        "hash": "0x3d916abc0dedc04e352289ff667ee83811ae9b5fc86da9eb1c793bf9d80e0d17",
-        "index": 6,
-        "signature": null,
         "success": true
       }
     ],
     "header": {
-      "block_hash": "0x5a24c47b94b05a13b94e8b9561724fb49eb2725e4d951ad791d0282d20f0667b",
-      "extrinsics_root": "0x66844dd11a095dcd09788e823056111844379e1af31d1e53768deed8580c5a1c",
-      "number": 121,
-      "parent_hash": "0x6f08c4822a8c277156a257d1c8118ac38ce5ad4c353efc27f0efe224507dbd46",
-      "state_root": "0xc3e8c83d90e57f5574829faf79f1bba566350f2251189088a51ec6880d7e7fc6"
+      "block_hash": "0xc34449ad91dfa044c4d314b1b22762189bb3ad4a8577a9050e90e443f3550afc",
+      "extrinsics_root": "0x549cf14e3874c61be194dd27e3e930891daf2a1dd4cd60ed7fc39a0923c4a261",
+      "number": 394,
+      "parent_hash": "0xf78eb90a94e881b488b8c3a81905d0424e2c55834a819164c7afba2594f43318",
+      "state_root": "0x488c4a38429adbe510bf2e37230244f795638b4964d2bfcee6649e38b3343a21"
     }
   },
   "id": 1
@@ -361,7 +350,7 @@ reference `chain_getBlockByNumber`
 ### Example
 ```
 // Request
-curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByHash","params":[0, "0xeed3ef98e847cc817b8e682fe11e63fd86050d6699e484eb75ff28fe9580bd7a"],"id":1}' localhost:10055 -H 'Content-Type: application/json'
+curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByHash","params":[0, "0xc34449ad91dfa044c4d314b1b22762189bb3ad4a8577a9050e90e443f3550afc"],"id":1}' localhost:10055 -H 'Content-Type: application/json'
 
 // Result
 {
@@ -373,10 +362,10 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByHash","params":[
           "method": 0,
           "module": 0,
           "params": {
-            "now": 1596125229
+            "now": 1596874295
           }
         },
-        "hash": "0xd5fdce0a3cf253abaa856c21cdf64a57d33df35b163b004e25c57d7469d66c98",
+        "hash": "0x033460364355b535bc1af8d55bede9eeb7fde511fe033e4b379156f32ff15e34",
         "index": 0,
         "signature": null,
         "success": true
@@ -387,12 +376,12 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByHash","params":[
           "module": 2,
           "params": {
             "info": {
-              "coinbase": "0x1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc54",
+              "coinbase": "0x44a5fbc7fff3cb26358e6070fbe7e171f978a5bf6de3dcc7ba359bb783916d44",
               "reward_condition": "Normal"
             }
           }
         },
-        "hash": "0x7d741e7c792e5aa8aad2f1d5793b3f275c62d0a8dfaac23296728451c7fb41b0",
+        "hash": "0x274e0944bd0fa0626b6beefd60da6692b7e7340e606865d50ee1c43c2053315b",
         "index": 1,
         "signature": null,
         "success": true
@@ -419,10 +408,10 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByHash","params":[
           "method": 0,
           "module": 6,
           "params": {
-            "info": "0x58c35a5978bc6b24e6c4b2957335cd834212af9e5f7117b8f03e81075809dde0"
+            "info": "0xc260e48a949ae9fdcfc3386d82b59fa3cb5c9532323cdb48273bf1d1d6f635d9"
           }
         },
-        "hash": "0x78c2005bd842aaf5fd91e43ffc992c5cfbed7da3ef35b3caae36e06599c93ba6",
+        "hash": "0x6fef63024a5783cc998dec92ef2b781e97a261a964bc13667e9ff811ca7e11fe",
         "index": 3,
         "signature": null,
         "success": true
@@ -432,10 +421,10 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByHash","params":[
           "method": 0,
           "module": 7,
           "params": {
-            "hint": 114
+            "hint": 387
           }
         },
-        "hash": "0x013130cce060f5ee06ec96c2cd9362e47305c31eca26aaf9c3b7b3858cdd9440",
+        "hash": "0x4ce997a6efd74701a5e39205e10307c46fe33366b1ae6a53c307ec2a67ad68ec",
         "index": 4,
         "signature": null,
         "success": true
@@ -445,49 +434,36 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getBlockByHash","params":[
           "method": 0,
           "module": 4,
           "params": {
-            "dest": "0xff94d988b42d96dcbd6605ff47f19c6ab35f626eb1bc8bbd28f59a74997a253a3d",
-            "value": 100000000
+            "dest": "0xffc49bc1483a1669d65b19274445cb86604b7eca1d8e8d062269c8c6796a45b625",
+            "dest_address": "yee1cjduzjp6ze5avkceyazytjuxvp9hajsa36xsvgnferr8j6j9kcjsnuzkdc",
+            "dest_shard_num": 1,
+            "value": 10000000000
           }
         },
-        "hash": "0x9a3d2d9aac88964da0d3efc36ae9de85f728f0cba6043bd84d6573b3735e5c7f",
+        "hash": "0xeca31494ab0fd0dfbf5927f398e4ca3b9766c4d674f9d64bd4344c67e56b2e9b",
         "index": 5,
         "signature": {
           "era": {
             "Mortal": [
               64,
-              56
+              9
             ]
           },
-          "nonce": 0,
-          "sender": "0xff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc54",
-          "signature": "0x3cba8ec56b55217f962cdb458f0b9b7cc303f8692e0480d7b7ff717618253034e5f632e8fe280837745970a1f0a17b7a7fd104b0d81f5bb8491bfd5c4b422e0f"
+          "nonce": 1,
+          "sender": "0xff36b116bcdeff6bf63539cea3cafdd90bb53d6df043b2ef791d234c92ca5de804",
+          "sender_address": "yee1x6c3d0x7la4lvdfee63u4lwepw6n6m0sgwew77gaydxf9jjaaqzqzzu8dj",
+          "sender_shard_num": 0,
+          "signature": "0x80ba2ca34dfe11d120a8c610534887312c79e5c247da9b4f31ea7495a4376f6a9512d3f0b771c923142c46dc33ef6f924f86b8f7bcd1749eb2e15aa388bddb09"
         },
-        "success": true
-      },
-      {
-        "call": {
-          "method": 0,
-          "module": 9,
-          "params": {
-            "hash": "0xf61c24cee7371133a2295686e6d3c4f0bf3499674d9e0ed1b0d26d5e211bebf5",
-            "number": 89,
-            "parent": "0xe818f6fdf28768f4070fe337245249a584f84dea0ef2a90f2918042625254362",
-            "relay_type": "Balance",
-            "tx": "0x310281ff66122af0ca54d09bd572c01d1b9df1aaa1a139d414c2e9ef3a519a307c85fb192e5fca8b8793c5e413d1f8d89eb00d99f9b881de3863378bb2a8f4f49c3fb628b1bdfa4070297edbbde830c281ed9996c9c6b706b47f82ef94c0346d9878a40c0075010400ff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc540284d717"
-          }
-        },
-        "hash": "0x3d916abc0dedc04e352289ff667ee83811ae9b5fc86da9eb1c793bf9d80e0d17",
-        "index": 6,
-        "signature": null,
         "success": true
       }
     ],
     "header": {
-      "block_hash": "0x5a24c47b94b05a13b94e8b9561724fb49eb2725e4d951ad791d0282d20f0667b",
-      "extrinsics_root": "0x66844dd11a095dcd09788e823056111844379e1af31d1e53768deed8580c5a1c",
-      "number": 121,
-      "parent_hash": "0x6f08c4822a8c277156a257d1c8118ac38ce5ad4c353efc27f0efe224507dbd46",
-      "state_root": "0xc3e8c83d90e57f5574829faf79f1bba566350f2251189088a51ec6880d7e7fc6"
+      "block_hash": "0xc34449ad91dfa044c4d314b1b22762189bb3ad4a8577a9050e90e443f3550afc",
+      "extrinsics_root": "0x549cf14e3874c61be194dd27e3e930891daf2a1dd4cd60ed7fc39a0923c4a261",
+      "number": 394,
+      "parent_hash": "0xf78eb90a94e881b488b8c3a81905d0424e2c55834a819164c7afba2594f43318",
+      "state_root": "0x488c4a38429adbe510bf2e37230244f795638b4964d2bfcee6649e38b3343a21"
     }
   },
   "id": 1
@@ -529,12 +505,14 @@ params: [
  - `era`
  - `nonce`
  - `sender`
+ - `sender_address`
+ - `sender_shard_num`
  - `signature`
 
 ### Example
 ```
 // Request
-curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getExtrinsicByHash","params":[0, 121, "0x9a3d2d9aac88964da0d3efc36ae9de85f728f0cba6043bd84d6573b3735e5c7f"],"id":1}' localhost:10055 -H 'Content-Type: application/json'
+curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getExtrinsicByHash","params":[0, 394, "0xeca31494ab0fd0dfbf5927f398e4ca3b9766c4d674f9d64bd4344c67e56b2e9b"],"id":1}' localhost:10055 -H 'Content-Type: application/json'
 
 // Result
 {
@@ -544,22 +522,26 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getExtrinsicByHash","param
       "method": 0,
       "module": 4,
       "params": {
-        "dest": "0xff94d988b42d96dcbd6605ff47f19c6ab35f626eb1bc8bbd28f59a74997a253a3d",
-        "value": 100000000
+        "dest": "0xffc49bc1483a1669d65b19274445cb86604b7eca1d8e8d062269c8c6796a45b625",
+        "dest_address": "yee1cjduzjp6ze5avkceyazytjuxvp9hajsa36xsvgnferr8j6j9kcjsnuzkdc",
+        "dest_shard_num": 1,
+        "value": 10000000000
       }
     },
-    "hash": "0x9a3d2d9aac88964da0d3efc36ae9de85f728f0cba6043bd84d6573b3735e5c7f",
+    "hash": "0xeca31494ab0fd0dfbf5927f398e4ca3b9766c4d674f9d64bd4344c67e56b2e9b",
     "index": 5,
     "signature": {
       "era": {
         "Mortal": [
           64,
-          56
+          9
         ]
       },
-      "nonce": 0,
-      "sender": "0xff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc54",
-      "signature": "0x3cba8ec56b55217f962cdb458f0b9b7cc303f8692e0480d7b7ff717618253034e5f632e8fe280837745970a1f0a17b7a7fd104b0d81f5bb8491bfd5c4b422e0f"
+      "nonce": 1,
+      "sender": "0xff36b116bcdeff6bf63539cea3cafdd90bb53d6df043b2ef791d234c92ca5de804",
+      "sender_address": "yee1x6c3d0x7la4lvdfee63u4lwepw6n6m0sgwew77gaydxf9jjaaqzqzzu8dj",
+      "sender_shard_num": 0,
+      "signature": "0x80ba2ca34dfe11d120a8c610534887312c79e5c247da9b4f31ea7495a4376f6a9512d3f0b771c923142c46dc33ef6f924f86b8f7bcd1749eb2e15aa388bddb09"
     },
     "success": true
   },
@@ -592,7 +574,7 @@ reference `chain_getExtrinsicByHash`
 ### Example
 ```
 // Request
-curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getExtrinsicByHash","params":[0, 121, "0x9a3d2d9aac88964da0d3efc36ae9de85f728f0cba6043bd84d6573b3735e5c7f"],"id":1}' localhost:10055 -H 'Content-Type: application/json'
+curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getExtrinsicByHash","params":[0, 394, "0x390281ff36b116bcdeff6bf63539cea3cafdd90bb53d6df043b2ef791d234c92ca5de80480ba2ca34dfe11d120a8c610534887312c79e5c247da9b4f31ea7495a4376f6a9512d3f0b771c923142c46dc33ef6f924f86b8f7bcd1749eb2e15aa388bddb090495000400ffc49bc1483a1669d65b19274445cb86604b7eca1d8e8d062269c8c6796a45b6250700e40b5402"],"id":1}' localhost:10055 -H 'Content-Type: application/json'
 
 // Result
 {
@@ -602,22 +584,26 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getExtrinsicByHash","param
       "method": 0,
       "module": 4,
       "params": {
-        "dest": "0xff94d988b42d96dcbd6605ff47f19c6ab35f626eb1bc8bbd28f59a74997a253a3d",
-        "value": 100000000
+        "dest": "0xffc49bc1483a1669d65b19274445cb86604b7eca1d8e8d062269c8c6796a45b625",
+        "dest_address": "yee1cjduzjp6ze5avkceyazytjuxvp9hajsa36xsvgnferr8j6j9kcjsnuzkdc",
+        "dest_shard_num": 1,
+        "value": 10000000000
       }
     },
-    "hash": "0x9a3d2d9aac88964da0d3efc36ae9de85f728f0cba6043bd84d6573b3735e5c7f",
+    "hash": "0xeca31494ab0fd0dfbf5927f398e4ca3b9766c4d674f9d64bd4344c67e56b2e9b",
     "index": 5,
     "signature": {
       "era": {
         "Mortal": [
           64,
-          56
+          9
         ]
       },
-      "nonce": 0,
-      "sender": "0xff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc54",
-      "signature": "0x3cba8ec56b55217f962cdb458f0b9b7cc303f8692e0480d7b7ff717618253034e5f632e8fe280837745970a1f0a17b7a7fd104b0d81f5bb8491bfd5c4b422e0f"
+      "nonce": 1,
+      "sender": "0xff36b116bcdeff6bf63539cea3cafdd90bb53d6df043b2ef791d234c92ca5de804",
+      "sender_address": "yee1x6c3d0x7la4lvdfee63u4lwepw6n6m0sgwew77gaydxf9jjaaqzqzzu8dj",
+      "sender_shard_num": 0,
+      "signature": "0x80ba2ca34dfe11d120a8c610534887312c79e5c247da9b4f31ea7495a4376f6a9512d3f0b771c923142c46dc33ef6f924f86b8f7bcd1749eb2e15aa388bddb09"
     },
     "success": true
   },
