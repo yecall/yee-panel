@@ -178,6 +178,8 @@ pub struct ResultTransaction {
 	pub call: Call,
 	pub index: Option<u32>,
 	pub success: Option<bool>,
+	#[serde(skip_serializing_if = "Option::is_none")]
+	pub block_number: Option<BlockNumber>,
 }
 
 #[derive(Serialize, Debug)]
@@ -219,6 +221,7 @@ impl From<Transaction> for ResultTransaction {
 			call: t.call,
 			index: None,
 			success: None,
+			block_number: None,
 		}
 	}
 }

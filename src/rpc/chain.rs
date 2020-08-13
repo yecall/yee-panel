@@ -20,17 +20,20 @@ use std::convert::TryInto;
 use std::sync::Arc;
 
 use futures::future;
-use futures::future::Future;
+use futures::future::{Future, Loop};
 use jsonrpc_core::BoxFuture;
 use jsonrpc_derive::rpc;
 use parity_codec::Decode;
 use serde_json::Value;
 use srml_system::{EventRecord, Phase};
+use substrate_primitives::blake2_256;
 use yee_primitives::Address;
 use yee_primitives::AddressCodec;
 use yee_primitives::Hrp;
 use yee_runtime::Event;
 use yee_sharding_primitives::utils::shard_num_for_bytes;
+use yee_signer::tx::call::relay;
+use yee_signer::tx::types::Call;
 use yee_signer::tx::types::Transaction;
 
 use crate::config::Config;
@@ -85,6 +88,15 @@ pub trait ChainApi {
 		shard_num: u16,
 		block_number: BlockNumber,
 		raw: Hex<Vec<u8>>,
+	) -> BoxFuture<Option<Value>>;
+
+	#[rpc(name = "chain_getExtrinsicByOriginHash")]
+	fn get_extrinsic_by_origin_hash(
+		&self,
+		shard_num: u16,
+		from_block_number: BlockNumber,
+		to_block_number: BlockNumber,
+		origin_hash: Hex<Vec<u8>>,
 	) -> BoxFuture<Option<Value>>;
 
 	#[rpc(name = "state_getNonce")]
@@ -359,6 +371,54 @@ impl ChainApi for Chain {
 		let result = get_value_future(result);
 
 		let result = get_value_with_address_future(result);
+
+		let result = result.and_then(|x| match x {
+			Ok(v) => future::ok(v),
+			Err(e) => future::err(e),
+		});
+
+		Box::new(result)
+	}
+
+	fn get_extrinsic_by_origin_hash(
+		&self,
+		shard_num: u16,
+		from_block_number: BlockNumber,
+		to_block_number: BlockNumber,
+		origin_hash: Hex<Vec<u8>>,
+	) -> BoxFuture<Option<Value>> {
+		match check_shard_num(shard_num, &self.config) {
+			Err(e) => return Box::new(future::err(e.into())),
+			_ => (),
+		}
+
+		let rpc_client = self.rpc_client.clone();
+		let result = future::loop_fn(from_block_number, move |block_number| {
+			get_extrinsic_by_origin_hash_future(
+				rpc_client.clone(),
+				shard_num,
+				block_number,
+				origin_hash.clone(),
+			)
+			.and_then(move |x| {
+				x.map(|x| match x {
+					Some(tx) => {
+						let tx: jsonrpc_core::Result<Option<ResultTransaction>> = Ok(Some(tx));
+						Loop::Break(tx)
+					}
+					None => {
+						if block_number >= to_block_number {
+							Loop::Break(Ok(None))
+						} else {
+							Loop::Continue(block_number + 1)
+						}
+					}
+				})
+			})
+		});
+		let result = Box::new(result) as BoxFuture<jsonrpc_core::Result<Option<ResultTransaction>>>;
+
+		let result = get_value_future(result);
 
 		let result = result.and_then(|x| match x {
 			Ok(v) => future::ok(v),
@@ -701,6 +761,57 @@ fn extrinsic_append_address(extrinsic: &mut Value, hrp: Hrp, shard_count: u16) {
 		}
 		_ => (),
 	}
+}
+
+fn get_extrinsic_by_origin_hash_future(
+	rpc_client: Arc<RpcClient>,
+	shard_num: u16,
+	block_number: BlockNumber,
+	origin_hash: Hex<Vec<u8>>,
+) -> BoxFuture<jsonrpc_core::Result<Option<ResultTransaction>>> {
+	// get block hash
+	let get_block_hash = || -> BoxFuture<jsonrpc_core::Result<Option<Hex<Vec<u8>>>>> {
+		let result = client::get_block_hash_future(rpc_client.clone(), block_number, shard_num);
+		let result = result.map(|x| Ok(x));
+		Box::new(result)
+	};
+	let result = get_block_hash();
+
+	let result = get_block_future(rpc_client.clone(), shard_num, false, result);
+
+	// filter
+	let filter = move || -> BoxFuture<jsonrpc_core::Result<Option<ResultTransaction>>> {
+		let result = result.map(move |x| match x {
+			Ok(Some(block)) => {
+				let extrinsic = block
+					.extrinsics
+					.into_iter()
+					.filter_map(|mut tx| match &tx.call {
+						Call::Relay(call) => match call {
+							relay::Call::Transfer(transfer) => {
+								let origin_tx = &transfer.tx;
+								let origin_tx_hash = blake2_256(&origin_tx.0).to_vec();
+								if &origin_tx_hash == &origin_hash.0 {
+									tx.block_number = Some(block_number);
+									Some(tx)
+								} else {
+									None
+								}
+							}
+						},
+						_ => None,
+					})
+					.next();
+				Ok(extrinsic)
+			}
+			Ok(None) => Ok(None),
+			Err(e) => Err(e),
+		});
+		Box::new(result)
+	};
+	let result = filter();
+
+	Box::new(result)
 }
 
 fn u64_from_slice(bytes: &[u8]) -> errors::Result<u64> {

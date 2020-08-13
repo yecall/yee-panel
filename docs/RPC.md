@@ -9,6 +9,7 @@
 - [chain_getBlockByHash](#chain_getBlockByHash)
 - [chain_getExtrinsicByHash](#chain_getExtrinsicByHash)
 - [chain_getExtrinsicByRaw](#chain_getExtrinsicByRaw)
+- [chain_getExtrinsicByOriginHash](#chain_getExtrinsicByOriginHash)
 - [state_getNonce](#state_getNonce)
 - [author_submitExtrinsic](#author_submitExtrinsic)
 
@@ -104,11 +105,11 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getHeaderByNumber","params
 {
   "jsonrpc": "2.0",
   "result": {
-    "block_hash": "0xb4d35a4b1c5af319ab5922bbcfb946905248c4b174682abb61b5c090cdda16d5",
-    "extrinsics_root": "0x242916f3dad7735e350f2541d3bf1e4c747635b61fda11443dbaa81aa48a2d70",
+    "block_hash": "0x2ba6352cace11de7b9bb37f3afb72cad3f2c20e21a77f107f3bd17f763a6e807",
+    "extrinsics_root": "0xd01be7376faa2133af91c920de770d5ab01e7524b347d25a655a6ea16a9f6c9c",
     "number": 65,
-    "parent_hash": "0x68ab5ba6d5e1992cc65f66c36a21fc10ea9513a173737c4a02063d6be666029f",
-    "state_root": "0xa27664b888bed276ba67e0ee1cca674976ab4549992491ceb09cd36af12979b4"
+    "parent_hash": "0x713b7bffd160970863eb454ab912486ad0da6222862da1ea48f87e65edad265c",
+    "state_root": "0xb85dd1f68e3d1c979840c53f03640938dc6da844a64d9057905865560bbbd3e1"
   },
   "id": 1
 }
@@ -563,7 +564,7 @@ Get the extrinsic by block number and extrinsic raw
 params: [
     0,
     121,
-    "00x310281ff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc543cba8ec56b55217f962cdb458f0b9b7cc303f8692e0480d7b7ff717618253034e5f632e8fe280837745970a1f0a17b7a7fd104b0d81f5bb8491bfd5c4b422e0f0085030400ff94d988b42d96dcbd6605ff47f19c6ab35f626eb1bc8bbd28f59a74997a253a3d0284d717",
+    "0x310281ff1033e0576822a6a836f612a193036042050e286da4561f5cc5d8ee560c64dc543cba8ec56b55217f962cdb458f0b9b7cc303f8692e0480d7b7ff717618253034e5f632e8fe280837745970a1f0a17b7a7fd104b0d81f5bb8491bfd5c4b422e0f0085030400ff94d988b42d96dcbd6605ff47f19c6ab35f626eb1bc8bbd28f59a74997a253a3d0284d717",
 ]
 ```
 
@@ -605,6 +606,60 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getExtrinsicByHash","param
       "sender_shard_num": 0,
       "signature": "0x80ba2ca34dfe11d120a8c610534887312c79e5c247da9b4f31ea7495a4376f6a9512d3f0b771c923142c46dc33ef6f924f86b8f7bcd1749eb2e15aa388bddb09"
     },
+    "success": true
+  },
+  "id": 1
+}
+
+```
+
+## chain_getExtrinsicByOriginHash
+
+Get the relay extrinsic by block number range and origin extrinsic hash
+
+### Parameters
+ - `shard_num`
+ - `from_block_number`: inclusive
+ - `to_block_number`: inclusive
+ - `origin_hash`
+ 
+```asm
+params: [
+    1,
+    400,
+    500,
+    "0xeca31494ab0fd0dfbf5927f398e4ca3b9766c4d674f9d64bd4344c67e56b2e9b",
+]
+```
+
+### Returns 
+reference `chain_getExtrinsicByHash`
+
+
+### Example
+```
+// Request
+curl -X POST --data '{"jsonrpc":"2.0","method":"chain_getExtrinsicByOriginHash","params":[1, 400, 500, "0xeca31494ab0fd0dfbf5927f398e4ca3b9766c4d674f9d64bd4344c67e56b2e9b"],"id":1}' localhost:10055 -H 'Content-Type: application/json'
+
+// Result
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "block_number": 401,
+    "call": {
+      "method": 0,
+      "module": 9,
+      "params": {
+        "hash": "0xc34449ad91dfa044c4d314b1b22762189bb3ad4a8577a9050e90e443f3550afc",
+        "number": 394,
+        "parent": "0xf78eb90a94e881b488b8c3a81905d0424e2c55834a819164c7afba2594f43318",
+        "relay_type": "Balance",
+        "tx": "0x390281ff36b116bcdeff6bf63539cea3cafdd90bb53d6df043b2ef791d234c92ca5de80480ba2ca34dfe11d120a8c610534887312c79e5c247da9b4f31ea7495a4376f6a9512d3f0b771c923142c46dc33ef6f924f86b8f7bcd1749eb2e15aa388bddb090495000400ffc49bc1483a1669d65b19274445cb86604b7eca1d8e8d062269c8c6796a45b6250700e40b5402"
+      }
+    },
+    "hash": "0x13a51a1eb9be4b8349493fb795b63045cfa6f27470a0dbcc8d28d63995179e67",
+    "index": 5,
+    "signature": null,
     "success": true
   },
   "id": 1
