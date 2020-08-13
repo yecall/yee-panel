@@ -31,7 +31,6 @@ rpc = ["http://127.0.0.1:9233"]
 
 [shards.3]
 rpc = ["http://127.0.0.1:9333"]
-
 ```
 
 1. Start yee-panel

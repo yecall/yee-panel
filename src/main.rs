@@ -15,8 +15,9 @@
 // You should have received a copy of the GNU General Public License
 // along with YeeChain.  If not, see <https://www.gnu.org/licenses/>.
 
-use crate::config::{get_config, VersionInfo};
 use structopt::StructOpt;
+
+use crate::config::{get_config, VersionInfo};
 
 mod config;
 mod errors;

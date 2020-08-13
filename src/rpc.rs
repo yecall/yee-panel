@@ -26,7 +26,7 @@ use crate::rpc::chain::{Chain, ChainApi};
 use crate::rpc::server::{start_http, start_ws};
 
 mod chain;
-mod client;
+pub mod client;
 pub mod errors;
 mod metadata;
 mod serde;
