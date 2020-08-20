@@ -420,6 +420,8 @@ impl ChainApi for Chain {
 
 		let result = get_value_future(result);
 
+		let result = get_value_with_tx_decoded_future(result);
+
 		let result = result.and_then(|x| match x {
 			Ok(v) => future::ok(v),
 			Err(e) => future::err(e),
@@ -812,6 +814,58 @@ fn get_extrinsic_by_origin_hash_future(
 	let result = filter();
 
 	Box::new(result)
+}
+
+fn get_value_with_tx_decoded_future(
+	future: BoxFuture<jsonrpc_core::Result<Option<Value>>>,
+) -> BoxFuture<jsonrpc_core::Result<Option<Value>>> {
+	let hrp = HRP.read().expect("qed").clone();
+	let shard_count = SHARD_COUNT.read().expect("qed").clone();
+
+	let provide_tx_decoded = move || -> BoxFuture<jsonrpc_core::Result<Option<Value>>> {
+		let result = future.map(move |x| match x {
+			Ok(Some(mut value)) => {
+				// process extrinsic
+				match value.get("call") {
+					Some(_) => extrinsic_append_tx_decoded(&mut value, hrp.clone(), shard_count),
+					None => (),
+				}
+
+				Ok(Some(value))
+			}
+			Ok(None) => Ok(None),
+			Err(e) => Err(e),
+		});
+		Box::new(result)
+	};
+	let result = provide_tx_decoded();
+
+	Box::new(result)
+}
+
+fn extrinsic_append_tx_decoded(extrinsic: &mut Value, hrp: Hrp, shard_count: u16) {
+	let call = &mut extrinsic["call"];
+	let module = call.get("module").and_then(|x| x.as_u64());
+	let method = call.get("method").and_then(|x| x.as_u64());
+	match (module, method) {
+		(Some(9), Some(0)) => {
+			let params = &mut call["params"];
+			if let Some(tx) = params["tx"].as_str() {
+				let tx = tx.trim_start_matches("0x");
+				match hex::decode(tx) {
+					Ok(tx) => {
+						let tx: Transaction = Decode::decode(&mut &tx[..]).expect("qed");
+						let tx: ResultTransaction = tx.into();
+						let mut tx : Value = tx.try_into().expect("qed");
+						extrinsic_append_address(&mut tx, hrp, shard_count);
+						params["tx_decoded"] = tx;
+					}
+					Err(_) => (),
+				}
+			}
+		}
+		_ => (),
+	}
 }
 
 fn u64_from_slice(bytes: &[u8]) -> errors::Result<u64> {
