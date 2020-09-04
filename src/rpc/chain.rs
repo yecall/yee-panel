@@ -36,14 +36,14 @@ use yee_signer::tx::call::relay;
 use yee_signer::tx::types::Call;
 use yee_signer::tx::types::Transaction;
 
-use crate::config::Config;
 use crate::config::{HRP, SHARD_COUNT};
+use crate::config::Config;
 use crate::rpc::client::{self, RpcClient};
 use crate::rpc::errors;
 use crate::rpc::serde::Hex;
 use crate::rpc::types::{
-	get_map_storage_key, get_value_storage_key, BlockNumber, Nonce, ResultBlock, ResultHeader,
-	ResultTransaction,
+	Balance, BlockNumber, get_map_storage_key, get_value_storage_key, Nonce, ResultBlock,
+	ResultHeader, ResultTransaction,
 };
 
 #[rpc]
@@ -101,6 +101,9 @@ pub trait ChainApi {
 
 	#[rpc(name = "state_getNonce")]
 	fn get_nonce(&self, address: String, block_number: Option<BlockNumber>) -> BoxFuture<Nonce>;
+
+	#[rpc(name = "state_getBalance")]
+	fn get_balance(&self, address: String, block_number: Option<BlockNumber>) -> BoxFuture<Value>;
 
 	#[rpc(name = "author_submitExtrinsic")]
 	fn submit_extrinsic(&self, raw: Hex<Vec<u8>>) -> BoxFuture<Hex<Vec<u8>>>;
@@ -226,7 +229,7 @@ impl ChainApi for Chain {
 
 		let result = get_block_future(self.rpc_client.clone(), shard_num, false, result);
 
-		let result = get_value_future(result);
+		let result = get_option_value_future(result);
 
 		let result = get_value_with_address_future(result);
 
@@ -248,7 +251,7 @@ impl ChainApi for Chain {
 
 		let result = get_block_future(self.rpc_client.clone(), shard_num, false, result);
 
-		let result = get_value_future(result);
+		let result = get_option_value_future(result);
 
 		let result = get_value_with_address_future(result);
 
@@ -306,7 +309,7 @@ impl ChainApi for Chain {
 		};
 		let result = filter();
 
-		let result = get_value_future(result);
+		let result = get_option_value_future(result);
 
 		let result = get_value_with_address_future(result);
 
@@ -368,7 +371,7 @@ impl ChainApi for Chain {
 		};
 		let result = filter();
 
-		let result = get_value_future(result);
+		let result = get_option_value_future(result);
 
 		let result = get_value_with_address_future(result);
 
@@ -418,7 +421,7 @@ impl ChainApi for Chain {
 		});
 		let result = Box::new(result) as BoxFuture<jsonrpc_core::Result<Option<ResultTransaction>>>;
 
-		let result = get_value_future(result);
+		let result = get_option_value_future(result);
 
 		let result = get_value_with_tx_decoded_future(result);
 
@@ -494,6 +497,81 @@ impl ChainApi for Chain {
 			Box::new(result)
 		};
 		let result = get_nonce();
+
+		let result = result.and_then(|x| match x {
+			Ok(v) => future::ok(v),
+			Err(e) => future::err(e),
+		});
+
+		Box::new(result)
+	}
+
+	fn get_balance(&self, address: String, block_number: Option<BlockNumber>) -> BoxFuture<Value> {
+		let address = Address(address);
+
+		let (public_key, _hrp) = match <[u8; 32]>::from_address(&address)
+			.map_err(|_| errors::Error::from(errors::ErrorKind::InvalidAddress).into())
+		{
+			Ok(v) => v,
+			Err(e) => return Box::new(future::err(e)),
+		};
+
+		let shard_count = self.config.shards.len() as u16;
+
+		let shard_num = match shard_num_for_bytes(&public_key, shard_count) {
+			Some(shard_num) => shard_num,
+			None => {
+				return Box::new(future::err(
+					errors::Error::from(errors::ErrorKind::InvalidShard).into(),
+				));
+			}
+		};
+		let storage_key = get_map_storage_key(&public_key, b"Balances FreeBalance");
+		let storage_key = Hex(storage_key.0);
+
+		// get block hash
+		let get_block_hash = || -> BoxFuture<jsonrpc_core::Result<Option<Hex<Vec<u8>>>>> {
+			match block_number {
+				Some(block_number) => {
+					let result = client::get_block_hash_future(
+						self.rpc_client.clone(),
+						block_number,
+						shard_num,
+					);
+					let result = result.map(|x| Ok(x));
+					Box::new(result)
+				}
+				None => Box::new(future::ok(Ok(None))),
+			}
+		};
+		let result = get_block_hash();
+
+		// get balance
+		let rpc_client = self.rpc_client.clone();
+		let get_balance = move || -> BoxFuture<jsonrpc_core::Result<Balance>> {
+			let result = result.and_then(move |x| match x {
+				Ok(block_hash) => {
+					let result = client::get_storage_future(
+						rpc_client,
+						&storage_key,
+						&block_hash,
+						shard_num,
+					);
+					let result = result.map(|x| -> jsonrpc_core::Result<Balance> {
+						match x {
+							Some(x) => Ok(Balance(u128_from_slice(&x.0)?)),
+							None => Ok(Balance(0)),
+						}
+					});
+					Box::new(result) as BoxFuture<jsonrpc_core::Result<Balance>>
+				}
+				Err(e) => Box::new(future::err(e)),
+			});
+			Box::new(result)
+		};
+		let result = get_balance();
+
+		let result = get_value_future(result);
 
 		let result = result.and_then(|x| match x {
 			Ok(v) => future::ok(v),
@@ -673,7 +751,7 @@ fn get_block_future(
 	Box::new(result)
 }
 
-fn get_value_future<T>(
+fn get_option_value_future<T>(
 	future: BoxFuture<jsonrpc_core::Result<Option<T>>>,
 ) -> BoxFuture<jsonrpc_core::Result<Option<Value>>>
 where
@@ -682,13 +760,37 @@ where
 	// convert to value to avoid jsonrpc u128 serialize problem
 	let convert_to_value = || -> BoxFuture<jsonrpc_core::Result<Option<Value>>> {
 		let result = future.map(|x| match x {
-			Ok(Some(block)) => {
-				let result: Value = block
+			Ok(Some(o)) => {
+				let result: Value = o
 					.try_into()
 					.map_err(|_| errors::Error::from(errors::ErrorKind::ParseError))?;
 				Ok(Some(result))
 			}
 			Ok(None) => Ok(None),
+			Err(e) => Err(e),
+		});
+		Box::new(result)
+	};
+	let result = convert_to_value();
+
+	Box::new(result)
+}
+
+fn get_value_future<T>(
+	future: BoxFuture<jsonrpc_core::Result<T>>,
+) -> BoxFuture<jsonrpc_core::Result<Value>>
+where
+	T: TryInto<Value> + 'static,
+{
+	// convert to value to avoid jsonrpc u128 serialize problem
+	let convert_to_value = || -> BoxFuture<jsonrpc_core::Result<Value>> {
+		let result = future.map(|x| match x {
+			Ok(o) => {
+				let result: Value = o
+					.try_into()
+					.map_err(|_| errors::Error::from(errors::ErrorKind::ParseError))?;
+				Ok(result)
+			}
 			Err(e) => Err(e),
 		});
 		Box::new(result)
@@ -856,7 +958,7 @@ fn extrinsic_append_tx_decoded(extrinsic: &mut Value, hrp: Hrp, shard_count: u16
 					Ok(tx) => {
 						let tx: Transaction = Decode::decode(&mut &tx[..]).expect("qed");
 						let tx: ResultTransaction = tx.into();
-						let mut tx : Value = tx.try_into().expect("qed");
+						let mut tx: Value = tx.try_into().expect("qed");
 						extrinsic_append_address(&mut tx, hrp, shard_count);
 						params["tx_decoded"] = tx;
 					}
@@ -877,4 +979,15 @@ fn u64_from_slice(bytes: &[u8]) -> errors::Result<u64> {
 	let bytes = &bytes[..];
 	array.copy_from_slice(bytes);
 	Ok(u64::from_le_bytes(array))
+}
+
+fn u128_from_slice(bytes: &[u8]) -> errors::Result<u128> {
+	const LEN: usize = 16;
+	if bytes.len() != LEN {
+		return Err(errors::ErrorKind::ParseError.into());
+	}
+	let mut array = [0; LEN];
+	let bytes = &bytes[..];
+	array.copy_from_slice(bytes);
+	Ok(u128::from_le_bytes(array))
 }
