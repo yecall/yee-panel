@@ -15,10 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with YeeChain.  If not, see <https://www.gnu.org/licenses/>.
 
-use parity_codec::Encode;
 use parity_codec::{Compact, Decode};
-use serde::export::TryFrom;
+use parity_codec::Encode;
 use serde::{Deserialize, Serialize};
+use serde::export::TryFrom;
 use serde_json::Value;
 use substrate_primitives::blake2_256;
 use substrate_primitives::storage::StorageKey;
@@ -37,6 +37,9 @@ pub type Hash = primitive_types::H256;
 pub type BlockNumber = u64;
 
 pub type Nonce = u64;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Balance(pub u128);
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -151,6 +154,16 @@ impl TryFrom<ResultTransaction> for Value {
 	type Error = errors::Error;
 
 	fn try_from(x: ResultTransaction) -> Result<Self, Self::Error> {
+		let x = serde_json::to_vec(&x).map_err(|_| errors::ErrorKind::ParseError)?;
+		let x = serde_json::from_slice(&x).map_err(|_| errors::ErrorKind::ParseError)?;
+		Ok(x)
+	}
+}
+
+impl TryFrom<Balance> for Value {
+	type Error = errors::Error;
+
+	fn try_from(x: Balance) -> Result<Self, Self::Error> {
 		let x = serde_json::to_vec(&x).map_err(|_| errors::ErrorKind::ParseError)?;
 		let x = serde_json::from_slice(&x).map_err(|_| errors::ErrorKind::ParseError)?;
 		Ok(x)
