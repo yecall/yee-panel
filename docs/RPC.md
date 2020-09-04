@@ -11,6 +11,7 @@
 - [chain_getExtrinsicByRaw](#chain_getExtrinsicByRaw)
 - [chain_getExtrinsicByOriginHash](#chain_getExtrinsicByOriginHash)
 - [state_getNonce](#state_getNonce)
+- [state_getBalance](#state_getBalance)
 - [author_submitExtrinsic](#author_submitExtrinsic)
 
 ## chain_getBestNumber
@@ -778,6 +779,39 @@ curl -X POST --data '{"jsonrpc":"2.0","method":"state_getNonce","params":["yee1z
 {
   "jsonrpc": "2.0",
   "result": 1,
+  "id": 1
+}
+
+```
+
+## state_getBalance
+
+Get the balance of the address
+
+### Parameters
+ - `address`
+ - `block_number`: Optional
+ 
+```asm
+params: [
+    "yee1sf05awmgnf8xc5p4nxedc6t4ynvvfdpnlfgfdukuaccmzrwtsdxq7kmnl0",
+    63287,
+]
+```
+
+### Returns 
+`nonce`
+
+
+### Example
+```
+// Request
+curl -X POST --data '{"jsonrpc":"2.0","method":"state_getBalance","params":["yee1sf05awmgnf8xc5p4nxedc6t4ynvvfdpnlfgfdukuaccmzrwtsdxq7kmnl0", 63287],"id":1}' localhost:10055 -H 'Content-Type: application/json'
+
+// Result
+{
+  "jsonrpc": "2.0",
+  "result": 940254322,
   "id": 1
 }
 
